@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1013507462130",
+    "project_id": "yellowpass-9902e",
+    "storage_bucket": "yellowpass-9902e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1013507462130:android:b91f222337d32c35edd16b",
+        "android_client_info": {
+          "package_name": "kr.co.yellowpass.parent"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbQpW7Zl8r2XPyePLtOTAIuOdqX2hRsZg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
