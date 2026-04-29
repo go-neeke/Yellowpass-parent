@@ -58,6 +58,9 @@ dependencies {
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging)
     implementation(libs.timber)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.activity.ktx)
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
