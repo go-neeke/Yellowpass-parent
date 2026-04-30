@@ -14,4 +14,8 @@ object Prefs {
     var parentId: Long
         get() = prefs.getLong("parentId", -1)
         set(value) = prefs.edit().putLong("parentId", value).apply()
+
+    var token: String?
+        get() = prefs.getString("token", "")
+        set(value) = prefs.edit().putString("token", value).apply()
 }

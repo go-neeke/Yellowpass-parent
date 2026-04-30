@@ -41,14 +41,21 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         requestNotificationPermission()
-        initFcm()
-
-        handleIntent(intent)
-
         enableEdgeToEdge() // 🔥 이거 추가
 
         setContent {
-            AppRoot(navEvent)
+            AppRoot(
+                navEvent = navEvent,
+                onLoginSuccess = {
+                    initFcm() // 로그인 성공 후 토큰 등록
+                }
+            )
+        }
+
+        // 이미 로그인된 사용자만 앱 시작 시 토큰 등록
+        if (Prefs.parentId != -1L) {
+            initFcm()
+            handleIntent(intent)
         }
     }
 
@@ -72,16 +79,28 @@ class MainActivity : ComponentActivity() {
         FirebaseMessaging.getInstance().token
             .addOnSuccessListener { token ->
                 lifecycleScope.launch(Dispatchers.IO) {
+                    Timber.d("token = $token")
                     sendTokenToServer(token)
                 }
             }
     }
 
     private suspend fun sendTokenToServer(token: String) {
+        val parentId = Prefs.parentId
+
+        if (parentId == -1L) {
+            Timber.w("parentId 없음. FCM 토큰 전송 생략")
+            return
+        }
+
         try {
             RetrofitClient.apiService.sendDeviceToken(
-                DeviceTokenRequest(parentId = Prefs.parentId, fcmToken = token)
+                DeviceTokenRequest(
+                    parentId = parentId,
+                    fcmToken = token
+                )
             )
+            Timber.d("FCM 토큰 서버 전송 성공")
         } catch (e: Exception) {
             Timber.e(e)
         }
@@ -98,57 +117,20 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
-fun ParentApp(navEvent: SharedFlow<DeepLinkData>) {
-
-    val navController = rememberNavController()
-
-    // 🔥 푸시 딥링크
-    LaunchedEffect(Unit) {
-        navEvent.collect { data ->
-            navController.navigate("detail/${data.boardingId}")
-        }
+fun AppRoot(
+    navEvent: SharedFlow<DeepLinkData>,
+    onLoginSuccess: () -> Unit
+) {
+    var isLogin by remember {
+        mutableStateOf(Prefs.parentId != -1L)
     }
-
-    NavHost(navController, startDestination = "childList") {
-
-        composable("childList") {
-            ChildListScreen(
-                onClick = { child ->
-                    navController.navigate("history/${child.studentId}")
-                }
-            )
-        }
-
-        composable("history/{childId}") { backStackEntry ->
-            val childId = backStackEntry.arguments?.getString("childId")?.toLong() ?: 0L
-
-            BoardingHistoryScreen(
-                childId = childId,
-                onClick = { boarding ->
-                    navController.navigate("detail/${boarding.boardingId}")
-                }
-            )
-        }
-
-        composable("detail/{boardingId}") { backStackEntry ->
-            val boardingId = backStackEntry.arguments?.getString("boardingId")?.toLong() ?: 0L
-
-            BoardingDetailScreen(boardingId = boardingId)
-        }
-    }
-}
-
-@Composable
-fun AppRoot(navEvent: SharedFlow<DeepLinkData>) {
-
-    var isLogin by remember { mutableStateOf(Prefs.parentId != -1L) }
 
     if (!isLogin) {
         LoginScreen(
             onLoginSuccess = {
                 isLogin = true
+                onLoginSuccess()
             }
         )
     } else {
